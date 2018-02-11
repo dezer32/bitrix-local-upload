@@ -12,7 +12,6 @@ require_once __DIR__ . '/abstract/LocalUploadAbstract.php';
 
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
-use Bitrix\Iblock\Template\Entity\ElementProperty;
 use Bitrix\Main\Application;
 use Bitrix\Main\FileTable;
 use Bitrix\Main\Loader;
@@ -23,6 +22,8 @@ class LocalUpload extends LocalUploadAbstract
 
     protected $db;
     protected $request;
+
+    private $propertyIDs;
 
     /**
      * LocalUpload constructor.
@@ -35,6 +36,21 @@ class LocalUpload extends LocalUploadAbstract
         $this->request = Application::getInstance()->getContext()->getRequest();
 
         parent::__construct($this->request->getQuery($this->requestVarName));
+    }
+
+    function getMainElementsInfo($arElements)
+    {
+        // TODO: Implement getMainElementsInfo() method.
+    }
+
+    function save()
+    {
+        // TODO: Implement save() method.
+    }
+
+    function eraseOldFileInfo($fileID)
+    {
+        // TODO: Implement eraseOldFileInfo() method.
     }
 
     function findFileIDByPath($fileName = null)
@@ -53,72 +69,110 @@ class LocalUpload extends LocalUploadAbstract
         return $fileID['ID'];
     }
 
+    function findElementsByFileID($fileID)
+    {
+        $result = $this->findElementsByFileIDFromMainProperty($fileID);
+        $otherProp = $this->findElementsByFileIDFromOtherProperty($fileID);
+        if (!empty($result)) {
+            $result = array_merge($result, $otherProp);
+        } else {
+            $result = $otherProp;
+        }
+        return $result;
+    }
+
+    function getPropertyIDs()
+    {
+        if (empty($this->propertyIDs)) {
+            $this->propertyIDs = $this->findPropertyIDs();
+        }
+        return $this->propertyIDs;
+    }
+
     function findPropertyIDs()
     {
-        // TODO: Implement findPropertyIDs() method.
         $parameters = [
             'filter' => [
                 'PROPERTY_TYPE' => PropertyTable::TYPE_FILE
             ],
             'select' => [
                 'ID',
-                'CODE'
+                'CODE',
+                'IBLOCK_ID'
             ]
         ];
         $propTable = PropertyTable::getList($parameters);
-
-        return $propTable->fetchAll();
+        return $this->propertyIDs = $propTable->fetchAll();
     }
 
-    private function findElementsByFileIDFromMainProperty($fileID) {
+    private function findElementsByFileIDFromMainProperty($fileID)
+    {
         $parameters = [
             'filter' => [
                 'LOGIC' => 'OR',
                 'DETAIL_PICTURE' => $fileID,
-                'PREVIEW_PICTURE' => $fileID
+                'PREVIEW_PICTURE' => $fileID,
             ],
             'select' => [
                 'ID',
-                'CODE',
                 'IBLOCK_ID',
-                'IBLOCK_SECTION_ID',
                 'DETAIL_PICTURE',
                 'PREVIEW_PICTURE'
             ]
         ];
         $elemTable = ElementTable::getList($parameters);
-
-        return $elemTable->fetchAll();
+        return $this->parseMainProp($elemTable->fetchAll());
     }
 
-    private function findElementsByFileIDFromOtherProperty($fileID) {
-        $parameters = [];
-        $propTable = PropertyTable::getList($parameters);
-
-        return $propTable->fetchAll();
-    }
-
-    function findElementsByFileID($fileID)
+    private function findElementsByFileIDFromOtherProperty($fileID)
     {
-//        $mainProp = $this->findElementsByFileIDFromMainProperty($fileID);
-        $otherProp = $this->findElementsByFileIDFromOtherProperty($fileID);
-
-        return $otherProp;
-        return array_merge($mainProp, $otherProp);
+        $propertyIDs = $this->getPropertyIDs();
+        $propertyIDs = array_column($propertyIDs, 'ID');
+        $queryPropertyIDs = implode(',', $propertyIDs);
+        $sql = 'select ep.IBLOCK_ELEMENT_ID as ID, 
+                       ep.IBLOCK_PROPERTY_ID as PROP_ID 
+                from b_iblock_element_property as ep 
+                WHERE ep.VALUE = "' . $fileID . '" AND ep.IBLOCK_PROPERTY_ID in (' . $queryPropertyIDs . ');';
+        $elemProp = $this->db->query($sql);
+        return $this->parseOtherProp($elemProp->fetchAll());
     }
 
-    function getMainElementsInfo($arElements)
+    private function parseMainProp($properties)
     {
-        // TODO: Implement getMainElementsInfo() method.
+        $result = [];
+        foreach ($properties as $property) {
+            $item = [
+                'elementID' => $property['ID'],
+                'iblockID' => $property['IBLOCK_ID']
+            ];
+            if (!empty($property['DETAIL_PICTURE'])) {
+                $item['propertyName'] = 'DETAIL_PICTURE';
+            } else {
+                $item['propertyName'] = 'PREVIEW_PICTURE';
+            }
+            $result[] = $item;
+        }
+        return $result;
     }
 
-    function save()
+    private function parseOtherProp($properties)
     {
-        // TODO: Implement save() method.
+        $result = [];
+        foreach ($properties as $property) {
+            $propertyInfo = $this->getPropertyInfoById($property['PROP_ID']);
+            $result[] = [
+                'elementID' => $property['ID'],
+                'iblockID' => $propertyInfo['IBLOCK_ID'],
+                'propertyName' => $propertyInfo['CODE']
+            ];
+        }
+        return $result;
     }
 
-    function eraseOldFileInfo($fileID)
+    private function getPropertyInfoById($id)
     {
-        // TODO: Implement eraseOldFileInfo() method.
+        $properties = $this->getPropertyIDs();
+        $key = array_search($id, array_column($properties, 'ID'));
+        return $properties[$key];
     }
 }
