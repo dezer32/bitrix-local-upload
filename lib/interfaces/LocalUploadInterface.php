@@ -39,10 +39,9 @@ interface LocalUploadInterface
 
     /**
      * Собирает основные свойства, необходимые для поиска их на удаленном сервере
-     * @param $arElements array
      * @return array массив, который будет запрашиваться у удаленного сервера.
      */
-    function getMainElementsInfo($arElements);
+    function getMainElementsInfo();
 
     /**
      * Сохранение полученных изменений.

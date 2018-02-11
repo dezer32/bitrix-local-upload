@@ -38,11 +38,6 @@ class LocalUpload extends LocalUploadAbstract
         parent::__construct($this->request->getQuery($this->requestVarName));
     }
 
-    function getMainElementsInfo($arElements)
-    {
-        // TODO: Implement getMainElementsInfo() method.
-    }
-
     function save()
     {
         // TODO: Implement save() method.
@@ -53,9 +48,16 @@ class LocalUpload extends LocalUploadAbstract
         // TODO: Implement eraseOldFileInfo() method.
     }
 
-    function findFileIDByPath($fileName = null)
+    function getMainElementsInfo()
     {
-        $fileName = parent::findFileIDByPath($fileName);
+        $fileName = $this->getRequestBaseName();
+        $fileID = $this->findFileIDByPath($fileName);
+
+        return $this->findElementsByFileID($fileID);
+    }
+
+    function findFileIDByPath($fileName)
+    {
         $parameters = [
             'filter' => [
                 'FILE_NAME' => $fileName
