@@ -10,8 +10,12 @@ namespace LocalUpload;
 
 require_once __DIR__ . '/abstract/LocalUploadAbstract.php';
 
+use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\PropertyTable;
+use Bitrix\Iblock\Template\Entity\ElementProperty;
 use Bitrix\Main\Application;
 use Bitrix\Main\FileTable;
+use Bitrix\Main\Loader;
 
 class LocalUpload extends LocalUploadAbstract
 {
@@ -25,6 +29,8 @@ class LocalUpload extends LocalUploadAbstract
      */
     public function __construct()
     {
+        Loader::includeModule('iblock');
+
         $this->db = Application::getConnection();
         $this->request = Application::getInstance()->getContext()->getRequest();
 
@@ -43,18 +49,62 @@ class LocalUpload extends LocalUploadAbstract
             ]
         ];
         $queryFileID = FileTable::getList($parameters);
-
-        return $queryFileID->fetch();
+        $fileID = $queryFileID->fetch();
+        return $fileID['ID'];
     }
 
     function findPropertyIDs()
     {
         // TODO: Implement findPropertyIDs() method.
+        $parameters = [
+            'filter' => [
+                'PROPERTY_TYPE' => PropertyTable::TYPE_FILE
+            ],
+            'select' => [
+                'ID',
+                'CODE'
+            ]
+        ];
+        $propTable = PropertyTable::getList($parameters);
+
+        return $propTable->fetchAll();
+    }
+
+    private function findElementsByFileIDFromMainProperty($fileID) {
+        $parameters = [
+            'filter' => [
+                'LOGIC' => 'OR',
+                'DETAIL_PICTURE' => $fileID,
+                'PREVIEW_PICTURE' => $fileID
+            ],
+            'select' => [
+                'ID',
+                'CODE',
+                'IBLOCK_ID',
+                'IBLOCK_SECTION_ID',
+                'DETAIL_PICTURE',
+                'PREVIEW_PICTURE'
+            ]
+        ];
+        $elemTable = ElementTable::getList($parameters);
+
+        return $elemTable->fetchAll();
+    }
+
+    private function findElementsByFileIDFromOtherProperty($fileID) {
+        $parameters = [];
+        $propTable = PropertyTable::getList($parameters);
+
+        return $propTable->fetchAll();
     }
 
     function findElementsByFileID($fileID)
     {
-        // TODO: Implement findElementsByFileID() method.
+//        $mainProp = $this->findElementsByFileIDFromMainProperty($fileID);
+        $otherProp = $this->findElementsByFileIDFromOtherProperty($fileID);
+
+        return $otherProp;
+        return array_merge($mainProp, $otherProp);
     }
 
     function getMainElementsInfo($arElements)

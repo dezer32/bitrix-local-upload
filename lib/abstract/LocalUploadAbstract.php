@@ -51,7 +51,7 @@ abstract class LocalUploadAbstract implements LocalUploadInterface
 
     function findFileIDByPath($fileName = null) {
         if ($fileName == null) {
-            return $this->getRequestFileName();
+            return $this->getRequestBaseName();
         }
         return $fileName;
     }

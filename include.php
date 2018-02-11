@@ -8,7 +8,7 @@
 
 try {
     \Bitrix\Main\Loader::registerAutoLoadClasses('local.upload', [
-        'LocalUpload' => 'lib/LocalUpload.php'
+        'LocalUpload\LocalUpload' => 'lib/LocalUpload.php'
     ]);
 } catch (\Bitrix\Main\LoaderException $e) {
     echo $e->getMessage();
