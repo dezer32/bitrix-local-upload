@@ -6,7 +6,10 @@
  * Time: 16:38
  */
 
-interface LocalUpload
+namespace LocalUpload;
+
+
+interface LocalUploadInterface
 {
     /**
      * Парсим урл на составляющие части

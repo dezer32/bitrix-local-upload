@@ -1,8 +1,13 @@
 <?php
+defined('B_PROLOG_INCLUDED') and (B_PROLOG_INCLUDED === true) or die();
+
+if (class_exists('upload_local')) {
+    return;
+}
 
 use Bitrix\Main\ModuleManager;
 
-class uploadlocal extends CModule
+class local_upload extends CModule
 {
     public function __construct()
     {
@@ -15,12 +20,12 @@ class uploadlocal extends CModule
             $this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
         }
 
-        $this->MODULE_ID = 'uploadlocal';
+        $this->MODULE_ID = 'local.upload';
         $this->MODULE_NAME = 'LocalUpload';
         $this->MODULE_DESCRIPTION = 'Local folder upload';
-        $this->MODULE_GROUP_RIGHTS = 'N';
-        $this->PARTNER_NAME = '';
-        $this->PARTNER_URI = '';
+        $this->MODULE_GROUP_RIGHTS = 'Y';
+        $this->PARTNER_NAME = 'Dezer';
+        $this->PARTNER_URI = 'http://dezer.pro';
     }
 
     public function doInstall()
