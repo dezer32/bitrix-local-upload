@@ -12,5 +12,5 @@ namespace LocalUpload;
 interface RemoteUploadInterface
 {
     function requestData($requestParams);
-    function parseRequest($response);
+    function parseResponse($response);
 }

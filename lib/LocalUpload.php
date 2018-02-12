@@ -9,6 +9,7 @@
 namespace LocalUpload;
 
 require_once __DIR__ . '/abstract/LocalUploadAbstract.php';
+require_once __DIR__.'/PlainUtils.php';
 
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
@@ -52,7 +53,9 @@ class LocalUpload extends LocalUploadAbstract
     {
         $fileName = $this->getRequestBaseName();
         $fileID = $this->findFileIDByPath($fileName);
-
+        if (empty($fileID)) {
+            throw new \Exception('Файла нет в локальной БД');
+        }
         return $this->findElementsByFileID($fileID);
     }
 
@@ -165,7 +168,9 @@ class LocalUpload extends LocalUploadAbstract
             $result[] = [
                 'elementID' => $property['ID'],
                 'iblockID' => $propertyInfo['IBLOCK_ID'],
-                'propertyName' => $propertyInfo['CODE']
+                'propertyID' => $property['PROP_ID'],
+                'propertyName' => $propertyInfo['CODE'],
+                'is_custom' => true
             ];
         }
         return $result;

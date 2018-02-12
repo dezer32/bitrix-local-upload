@@ -12,13 +12,34 @@ require_once __DIR__.'/../interfaces/RemoteUploadInterface.php';
 
 class RemoteUploadAbstract implements RemoteUploadInterface
 {
-    function requestData($requestParams)
+    protected $mainSiteUrl;
+
+    public function __construct($mainSiteUrl)
     {
-        // TODO: Implement requestData() method.
+        $this->mainSiteUrl = $mainSiteUrl;
     }
 
-    function parseRequest($response)
+    function requestData($requestParams)
     {
-        // TODO: Implement parseRequest() method.
+        return $requestParams;
+    }
+
+    function parseResponse($response)
+    {
+        return $response;
+    }
+
+    protected function sendRequest($data) {
+        if( $curl = curl_init() ) {
+            curl_setopt($curl, CURLOPT_URL, 'https://'.$this->mainSiteUrl.'/api/RemoteUpload/');
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($curl, CURLOPT_POST, true);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+            $out = curl_exec($curl);
+            curl_close($curl);
+
+            return $out;
+        }
+        return false;
     }
 }
